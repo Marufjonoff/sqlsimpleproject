@@ -4,7 +4,7 @@ import 'package:sqlsimpleproject/sql_providers/todo_provider.dart';
 List<TodoModel> todoModelFromMap(String str) => List<TodoModel>.from(json.decode(str).map((x) => TodoModel.fromMap(x)));
 
 class TodoModel {
-  int id = 0;
+  late String uuid;
   late String todoId;
   late bool isSelected;
   late String firstname;
@@ -14,6 +14,7 @@ class TodoModel {
   late Todo todo;
 
   TodoModel({
+    required this.uuid,
       required this.todoId,
       required this.isSelected,
       required this.firstname,
@@ -25,6 +26,7 @@ class TodoModel {
   Map<String, dynamic> toMap() {
     Map<String, dynamic> map = {};
     map = {
+      TodoProvider.columnId: uuid,
       TodoProvider.todoId: todoId,
       TodoProvider.isSelected: isSelected ? 1 : 0,
       TodoProvider.firstname: firstname,
@@ -37,7 +39,7 @@ class TodoModel {
   }
 
   TodoModel.fromMap(Map<String, dynamic> map) {
-    id = map[TodoProvider.columnId];
+    uuid = map[TodoProvider.columnId];
     todoId = map[TodoProvider.todoId];
     isSelected = map[TodoProvider.isSelected] == 1 ? true : false;
     firstname = map[TodoProvider.firstname];

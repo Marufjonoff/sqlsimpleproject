@@ -1,8 +1,8 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:sqlsimpleproject/model/todo_model.dart';
-import 'package:sqlsimpleproject/screen/add_todo_screen.dart';
 import 'package:sqlsimpleproject/sql_providers/todo_provider.dart';
+import 'add_todo_screen.dart';
 
 class TodoScreen extends StatefulWidget {
   const TodoScreen({super.key});
@@ -13,17 +13,27 @@ class TodoScreen extends StatefulWidget {
 
 class _TodoScreenState extends State<TodoScreen> {
   final todoProvider = TodoProvider();
+  int todoCount = 0;
   List<TodoModel> todos = [];
 
   @override
   void initState() {
     // TODO: implement initState
     super.initState();
+    // todoProvider.databaseDelete();
     todoProvider.init();
   }
 
   Future<void> _getAllTodos() async {
     todos = await todoProvider.getAllTodoModel();
+    todoCount = await todoProvider.getTodosCount();
+    setState(() {});
+  }
+
+  Future<void> _delete(String uuid) async {
+    int count = await todoProvider.delete(uuid);
+    debugPrint("Delete todo count: $count");
+    await _getAllTodos();
     setState(() {});
   }
 
@@ -31,7 +41,7 @@ class _TodoScreenState extends State<TodoScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Todo Screen"),
+        title: Text("Todo Screen $todoCount"),
         actions: [
           IconButton(
             onPressed: _getAllTodos,
@@ -107,7 +117,7 @@ class _TodoScreenState extends State<TodoScreen> {
                             style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16, color: Colors.black),
                             children: [
                               TextSpan(
-                                  text: "id - ${todos[index].id}, todoId - ${todos[index].todoId}",
+                                  text: "id - ${todos[index].uuid}, todoId - ${todos[index].todoId}",
                                   style: const TextStyle(fontWeight: FontWeight.w500)
                               ),
                             ]
@@ -148,12 +158,20 @@ class _TodoScreenState extends State<TodoScreen> {
                 right: 10,
                 child: IconButton(
                   onPressed: () async {
-                    final result = await Navigator.push(context, CupertinoPageRoute(builder: (__) => const AddTodoScreen()));
+                    final result = await Navigator.push(context, CupertinoPageRoute(builder: (__) => AddTodoScreen(isEditable: true, model: todos[index])));
                     if(result ?? false) {
                       await _getAllTodos();
                     }
                   },
                   icon: const Icon(Icons.edit, color: Colors.green),
+                ),
+              ),
+              Positioned(
+                bottom: 10,
+                right: 10,
+                child: IconButton(
+                  onPressed: () async => await _delete(todos[index].uuid),
+                  icon: const Icon(Icons.delete, color: Colors.red),
                 ),
               )
             ],

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:sqlsimpleproject/screen/todo_screen.dart';
+
+import 'screens/todo_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();

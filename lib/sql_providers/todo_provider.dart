@@ -7,7 +7,7 @@ class TodoProvider {
   static const _databaseVersion = 1;
   static const _table = "todo_model_table";
 
-  static const columnId = "_id";
+  static const columnId = "_uuid";
   static const todoId = "todoId";
   static const isSelected = "isSelected";
   static const firstname = "firstname";
@@ -18,6 +18,13 @@ class TodoProvider {
 
   late Database _db;
 
+  /// database delete
+  Future<void> databaseDelete() async {
+    final documentsDirectory = await getDatabasesPath();
+    final path = join(documentsDirectory, _databaseName);
+    await deleteDatabase(path);
+  }
+
   /// init database and create table
   Future<void> init() async {
     final documentsDirectory = await getDatabasesPath();
@@ -27,7 +34,7 @@ class TodoProvider {
     await _db.transaction((txn) async {
       await txn.execute('''
       CREATE TABLE IF NOT EXISTS $_table (
-        $columnId INTEGER PRIMARY KEY,
+        $columnId TEXT NOT NULL,
         $todoId TEXT NOT NULL,
         $isSelected INTEGER NOT NULL,
         $firstname TEXT NOT NULL,
@@ -37,10 +44,11 @@ class TodoProvider {
         $todo TEXT NOT NULL
       )
     ''');
+      /// JSONB
     });
   }
 
-  /// insert TodoModel
+  /// insert TodoModel returned insert count
   Future<int> insert(TodoModel model) async {
     return await _db.transaction((txn) async {
       return await txn.insert(_table, model.toMap());
@@ -52,5 +60,31 @@ class TodoProvider {
     List<TodoModel> todos = [];
     todos = (await _db.query(_table)).map((e) => TodoModel.fromMap(e)).toList();
     return todos;
+  }
+
+  /// all list count
+  Future<int> getTodosCount() async {
+    final todos = await _db.rawQuery("SELECT COUNT(*) FROM $_table");
+    return Sqflite.firstIntValue(todos) ?? 0;
+  }
+
+  /// update todo
+  Future<int> update(TodoModel todoModel) async {
+    return await _db.update(
+        _table,
+        todoModel.toMap(),
+        where: '$columnId = ?',
+      whereArgs: [todoModel.uuid]
+    );
+  }
+
+  /// Deletes the row specified by the id. The number of affected rows is
+  /// returned. This should be 1 as long as the row exists.
+  Future<int> delete(String uuid) async {
+    return await _db.delete(
+      _table,
+      where: '$columnId = ?',
+      whereArgs: [uuid],
+    );
   }
 }
